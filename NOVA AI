@@ -1,0 +1,288 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Nova AI — Smart Assistant</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#070b14;color:#eef2ff;height:100vh;overflow:hidden}
+.app{display:flex;height:100vh}.side{width:245px;background:#0d1320;border-right:1px solid #263047;padding:20px;display:flex;flex-direction:column}
+.logo{font-size:25px;font-weight:800;margin-bottom:22px}.new{background:#19243a;border:1px solid #35425e;color:#fff;border-radius:12px;padding:12px;cursor:pointer;font-weight:700}
+.card{margin-top:16px;padding:14px;background:#111a2a;border:1px solid #27334b;border-radius:14px;color:#aeb9d0;font-size:12px;line-height:1.6}.bottom{margin-top:auto;color:#71809d;font-size:11px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}.top{height:66px;border-bottom:1px solid #263047;display:flex;align-items:center;padding:0 25px;font-weight:800;font-size:18px}
+.chat{flex:1;overflow:auto;padding:25px}.wrap{max-width:900px;margin:auto}.welcome{text-align:center;margin:10vh auto 25px}.planet{font-size:58px}.welcome h1{font-size:40px;margin:10px 0}.welcome p{color:#94a1ba}
+.msg{display:flex;margin:17px 0}.msg.user{justify-content:flex-end}.bubble{max-width:78%;padding:14px 17px;border-radius:17px;line-height:1.55;white-space:pre-wrap}.assistant .bubble{background:#111a29;border:1px solid #2a3852}.user .bubble{background:#294779}
+.composer{border-top:1px solid #263047;padding:15px 18px}.composerIn{max-width:900px;margin:auto;display:flex;gap:10px}
+textarea{flex:1;background:#101827;border:1px solid #34425e;color:white;border-radius:15px;padding:15px;font:inherit;resize:none;outline:none}textarea:focus{border-color:#728cff}
+.send,.search{border:0;border-radius:14px;background:#6e82ff;color:white;font-weight:800;cursor:pointer}.send{width:56px;font-size:20px}.search{padding:0 16px}
+.tools{max-width:900px;margin:8px auto 0;display:flex;gap:8px;flex-wrap:wrap}.tool{background:#111a29;border:1px solid #2b3851;color:#aeb9d0;border-radius:10px;padding:7px 10px;cursor:pointer;font-size:12px}
+.status{max-width:900px;margin:6px auto 0;color:#71809d;font-size:11px}.topControls{margin-left:auto;display:flex;gap:8px;align-items:center}
+#language,.historyBtn{background:#111a29;border:1px solid #34425e;color:#eef2ff;border-radius:10px;padding:8px 10px}
+.historyBtn{cursor:pointer}.voiceBtn{margin-top:10px}.voiceMic{width:55px;border:1px solid #34425e;border-radius:14px;background:#111a29;color:#fff;cursor:pointer;font-size:19px}.voiceMic.listening{background:#b52f4b;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.55}}
+.historyPanel{position:fixed;right:18px;top:78px;width:min(380px,calc(100vw - 36px));max-height:70vh;overflow:auto;background:#0d1320;border:1px solid #34425e;border-radius:16px;padding:14px;z-index:10;box-shadow:0 20px 50px #0008}
+.historyPanel h3{margin:5px 0 12px}.historyItem{padding:10px;border:1px solid #27334b;border-radius:10px;margin:7px 0;cursor:pointer}.historyItem:hover{background:#151f32}.historyDate{font-size:10px;color:#71809d;margin-bottom:4px}
+@media(max-width:700px){.side{display:none}.welcome h1{font-size:30px}.bubble{max-width:90%}.topControls{gap:4px}#language{max-width:125px}.historyBtn{padding:8px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+<div class="logo">🌌 Nova AI</div>
+<button class="new" onclick="newChat()">＋ New Chat</button>
+<button class="new voiceBtn" id="voiceBtn" onclick="startVoice()">🎙️ Voice</button>
+<button class="new" onclick="clearHistory()">🗑 Clear History</button>
+<div class="card"><b>Smart Assistant</b><br>School • Coding • Math • Science • Writing • Research</div>
+<div class="card"><b>Web Search</b><br>Use the Google Search button to open live results for any question.</div>
+<div class="bottom">Nova AI © 2026<br>Standalone Submission</div>
+</aside>
+<main class="main">
+<div class="top">
+  <span>Nova AI Assistant</span>
+  <div class="topControls">
+    <select id="language" onchange="changeLanguage(this.value)" title="Language">
+      <option value="en-US">🇺🇸 English</option>
+      <option value="ar-SA">🇸🇦 العربية</option>
+      <option value="ur-PK">🇵🇰 اردو</option>
+      <option value="hi-IN">🇮🇳 हिन्दी</option>
+      <option value="fr-FR">🇫🇷 Français</option>
+      <option value="es-ES">🇪🇸 Español</option>
+    </select>
+    <button class="historyBtn" onclick="showHistory()">🕘 History</button>
+  </div>
+</div>
+<section class="chat" id="chat"><div class="wrap" id="messages">
+<div class="welcome" id="welcome"><div class="planet">🌌</div><h1>How can I help?</h1><p>Ask Nova AI a question and choose an action below.</p></div>
+</div></section>
+<div class="composer">
+<div class="composerIn">
+  <textarea id="input" rows="1" placeholder="Ask Nova AI anything..."></textarea>
+  <button class="voiceMic" id="mic" onclick="startVoice()" title="Voice recognition">🎙️</button>
+  <button class="send" onclick="ask()">➤</button>
+</div>
+<div class="tools">
+<button class="tool" onclick="quick('Explain artificial intelligence in simple words')">🤖 AI</button>
+<button class="tool" onclick="quick('Help me with a math problem')">🧮 Math</button>
+<button class="tool" onclick="quick('Give me a coding idea')">💻 Coding</button>
+<button class="tool" onclick="googleSearch()">🔎 Google Search</button>
+</div>
+<div class="status" id="status">Ready</div><button class="tool" id="speakLast" onclick="speakLastAnswer()" style="margin-top:8px">🔊 Speak Last Answer</button>
+</div>
+</main></div>
+<script>
+const input=document.getElementById('input'), messages=document.getElementById('messages'), chat=document.getElementById('chat'), status=document.getElementById('status');
+let currentLanguage=localStorage.getItem('novaLanguage')||'en-US';
+let history=JSON.parse(localStorage.getItem('novaHistory')||'[]');
+document.getElementById('language').value=currentLanguage;
+
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask()}});
+
+const langText={
+'en-US':{placeholder:'Ask Nova AI anything...',ready:'Ready',thinking:'Nova AI is thinking...',welcome:'How can I help?',sub:'Ask Nova AI a question and choose an action below.'},
+'ar-SA':{placeholder:'اسأل نوفا أي شيء...',ready:'جاهز',thinking:'نوفا تفكر...',welcome:'كيف يمكنني مساعدتك؟',sub:'اسأل نوفا أي سؤال.'},
+'ur-PK':{placeholder:'Nova AI سے کچھ بھی پوچھیں...',ready:'تیار',thinking:'Nova AI سوچ رہا ہے...',welcome:'میں کیسے مدد کر سکتا ہوں؟',sub:'Nova AI سے سوال پوچھیں۔'},
+'hi-IN':{placeholder:'Nova AI से कुछ भी पूछें...',ready:'तैयार',thinking:'Nova AI सोच रहा है...',welcome:'मैं कैसे मदद कर सकता हूँ?',sub:'Nova AI से सवाल पूछें।'},
+'fr-FR':{placeholder:'Demandez n’importe quoi à Nova AI...',ready:'Prêt',thinking:'Nova AI réfléchit...',welcome:'Comment puis-je aider ?',sub:'Posez une question à Nova AI.'},
+'es-ES':{placeholder:'Pregunta lo que quieras a Nova AI...',ready:'Listo',thinking:'Nova AI está pensando...',welcome:'¿Cómo puedo ayudarte?',sub:'Haz una pregunta a Nova AI.'}
+};
+
+function saveHistory(){
+ localStorage.setItem('novaHistory',JSON.stringify(history.slice(-50)));
+}
+function changeLanguage(lang){
+ document.documentElement.lang=lang;
+ currentLanguage=lang;
+ localStorage.setItem('novaLanguage',lang);
+ input.placeholder=langText[lang].placeholder;
+ status.textContent=langText[lang].ready;
+ if(window.recognition) recognition.lang=lang;
+}
+changeLanguage(currentLanguage);
+
+function add(role,text,save=true){
+ document.getElementById('welcome')?.remove();
+ let r=document.createElement('div');r.className='msg '+role;
+ let b=document.createElement('div');b.className='bubble';b.textContent=text;
+ r.appendChild(b);messages.appendChild(r);chat.scrollTop=chat.scrollHeight;
+ if(save){
+   history.push({role,text,time:new Date().toLocaleString(),lang:currentLanguage});
+   saveHistory();
+ }
+ return b;
+}
+
+function quick(t){input.value=t;ask()}
+
+function googleSearch(){
+ let q=input.value.trim();
+ if(!q){add('assistant', currentLanguage==='ar-SA'?'اكتب سؤالك أولاً ثم اضغط بحث Google.':'Type your question first, then press Google Search.');return}
+ window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank');
+ add('assistant','🔎 Google Search opened for: '+q);
+ status.textContent='Google Search opened';
+}
+
+function ask(){
+ let q=input.value.trim();if(!q)return;
+ input.value='';add('user',q);status.textContent=langText[currentLanguage].thinking;
+ let b=add('assistant','Thinking…',false);
+ setTimeout(()=>{let a=answer(q);b.textContent=a;lastAnswerText=a;history.push({role:'assistant',text:a,time:new Date().toLocaleString(),lang:currentLanguage});saveHistory();status.textContent=langText[currentLanguage].ready;speak(a)},350);
+}
+
+function answer(q){
+ let s=q.toLowerCase();
+ const L=currentLanguage;
+
+ const replies={
+  "en-US":{
+   ai:"Artificial Intelligence (AI) is technology that allows computers to perform tasks that normally require human intelligence, such as understanding language, recognizing images, solving problems, and generating content.",
+   coding:"A strong coding-week project combines useful features in one place. Nova AI includes AI-style assistance, Google Search, voice recognition, language switching, saved history, and voice answers.",
+   math:"Sure bro! Send me the exact math problem and I can explain the steps. For live information, use the Google Search button.",
+   hello:"Hello bro! 👋 I’m Nova AI. Ask me about coding, school, science, math, writing, or anything you want to explore.",
+   fallback:"I can help you explore that topic, bro. For live or current information, press 🔎 Google Search and I’ll open Google results for your question."
+  },
+  "ar-SA":{
+   ai:"الذكاء الاصطناعي هو تقنية تسمح لأجهزة الكمبيوتر بتنفيذ مهام تحتاج عادةً إلى ذكاء بشري، مثل فهم اللغة وحل المشكلات والتعرف على الصور وإنشاء المحتوى.",
+   coding:"مشروع قوي لأسبوع البرمجة يجمع ميزات مفيدة في مكان واحد. Nova AI يحتوي على البحث في Google والتعرف على الصوت وتغيير اللغة وحفظ السجل والإجابات الصوتية.",
+   math:"أكيد يا برو! أرسل لي مسألة الرياضيات وسأشرح لك الخطوات. وللمعلومات المباشرة استخدم زر بحث Google.",
+   hello:"أهلاً يا برو! 👋 أنا Nova AI. اسألني عن البرمجة أو الدراسة أو العلوم أو الرياضيات أو أي موضوع تريد استكشافه.",
+   fallback:"أستطيع مساعدتك في استكشاف هذا الموضوع يا برو. للمعلومات الحديثة أو الحالية، اضغط 🔎 بحث Google لفتح نتائج البحث."
+  },
+  "ur-PK":{
+   ai:"مصنوعی ذہانت ایسی ٹیکنالوجی ہے جو کمپیوٹر کو انسانی ذہانت جیسے کام کرنے دیتی ہے، مثلاً زبان سمجھنا، مسائل حل کرنا، تصاویر پہچاننا اور مواد بنانا۔",
+   coding:"کوڈنگ ویک کے لیے ایک اچھا پروجیکٹ کئی مفید فیچرز کو ایک جگہ جمع کرتا ہے۔ Nova AI میں Google سرچ، وائس ریکگنیشن، زبان تبدیل کرنا، ہسٹری محفوظ کرنا اور وائس جواب شامل ہیں۔",
+   math:"بالکل برو! مجھے ریاضی کا سوال بھیجو اور میں مرحلہ وار سمجھاؤں گا۔ تازہ معلومات کے لیے Google Search استعمال کرو۔",
+   hello:"السلام علیکم برو! 👋 میں Nova AI ہوں۔ مجھ سے کوڈنگ، پڑھائی، سائنس، ریاضی یا کسی بھی موضوع کے بارے میں پوچھو۔",
+   fallback:"میں اس موضوع کے بارے میں آپ کی مدد کر سکتا ہوں برو۔ تازہ معلومات کے لیے 🔎 Google Search دبائیں۔"
+  },
+  "hi-IN":{
+   ai:"आर्टिफिशियल इंटेलिजेंस ऐसी तकनीक है जो कंप्यूटर को इंसानों जैसी बुद्धिमत्ता वाले काम करने देती है, जैसे भाषा समझना, समस्याएँ हल करना, चित्र पहचानना और सामग्री बनाना।",
+   coding:"कोडिंग वीक के लिए एक अच्छा प्रोजेक्ट कई उपयोगी फीचर्स को एक जगह लाता है। Nova AI में Google Search, Voice Recognition, भाषा बदलना, History और Voice Answers हैं।",
+   math:"बिल्कुल ब्रो! अपना गणित का सवाल भेजो और मैं उसे चरणों में समझाऊँगा। नई जानकारी के लिए Google Search इस्तेमाल करो।",
+   hello:"हैलो ब्रो! 👋 मैं Nova AI हूँ। मुझसे कोडिंग, पढ़ाई, विज्ञान, गणित या किसी भी विषय के बारे में पूछो।",
+   fallback:"मैं इस विषय को समझने में आपकी मदद कर सकता हूँ ब्रो। नई या वर्तमान जानकारी के लिए 🔎 Google Search दबाएँ।"
+  },
+  "fr-FR":{
+   ai:"L’intelligence artificielle est une technologie qui permet aux ordinateurs d’effectuer des tâches qui demandent habituellement une intelligence humaine, comme comprendre le langage et résoudre des problèmes.",
+   coding:"Un bon projet de semaine de programmation réunit plusieurs fonctions utiles. Nova AI propose la recherche Google, la reconnaissance vocale, le changement de langue, l’historique et les réponses vocales.",
+   math:"Bien sûr ! Envoie-moi ton problème de maths et je peux expliquer les étapes. Pour les informations actuelles, utilise Google Search.",
+   hello:"Bonjour ! 👋 Je suis Nova AI. Demande-moi quelque chose sur le code, l’école, les sciences, les maths ou un autre sujet.",
+   fallback:"Je peux t’aider à explorer ce sujet. Pour les informations actuelles, appuie sur 🔎 Google Search."
+  },
+  "es-ES":{
+   ai:"La inteligencia artificial es una tecnología que permite a los ordenadores realizar tareas que normalmente requieren inteligencia humana, como comprender lenguaje y resolver problemas.",
+   coding:"Un buen proyecto de programación reúne varias funciones útiles. Nova AI incluye búsqueda de Google, reconocimiento de voz, cambio de idioma, historial guardado y respuestas por voz.",
+   math:"¡Claro, bro! Envíame el problema de matemáticas y te explicaré los pasos. Para información actual, usa Google Search.",
+   hello:"¡Hola, bro! 👋 Soy Nova AI. Pregúntame sobre programación, estudios, ciencia, matemáticas o cualquier otro tema.",
+   fallback:"Puedo ayudarte a explorar este tema. Para información actual, pulsa 🔎 Google Search."
+  }
+ };
+
+ const r=replies[L]||replies["en-US"];
+ if(s.includes('artificial intelligence')||s.includes('what is ai')||s.includes('ai')||s.includes('ذكاء اصطناعي')||s.includes('inteligencia artificial')||s.includes('intelligence artificielle')) return r.ai;
+ if(s.includes('coding')||s.includes('html')||s.includes('code')||s.includes('برمجة')||s.includes('कोडिंग')) return r.coding;
+ if(s.includes('math')||s.includes('رياضيات')||s.includes('ریاضی')||s.includes('गणित')||s.includes('maths')) return r.math;
+ if(s.includes('hello')||s.includes('hi')||s.includes('hey')||s.includes('مرحبا')||s.includes('السلام')||s.includes('سلام')||s.includes('hola')||s.includes('bonjour')||s.includes('नमस्ते')) return r.hello;
+ return r.fallback;
+}
+
+function newChat(){
+ messages.innerHTML='<div class="welcome" id="welcome"><div class="planet">🌌</div><h1>'+langText[currentLanguage].welcome+'</h1><p>'+langText[currentLanguage].sub+'</p></div>';
+ status.textContent='New chat';input.focus();
+}
+
+function showHistory(){
+ document.querySelector('.historyPanel')?.remove();
+ let panel=document.createElement('div');panel.className='historyPanel';
+ panel.innerHTML='<h3>🕘 Saved History</h3>';
+ if(!history.length) panel.innerHTML+='<p style="color:#8e9ab2">No saved conversations yet.</p>';
+ history.slice().reverse().slice(0,30).forEach((x,i)=>{
+   let item=document.createElement('div');item.className='historyItem';
+   item.innerHTML='<div class="historyDate">'+escapeHtml(x.time||'')+'</div><div>'+escapeHtml((x.role==='user'?'You: ':'Nova: ')+x.text)+'</div>';
+   item.onclick=()=>{input.value=x.text;panel.remove();input.focus()};
+   panel.appendChild(item);
+ });
+ let close=document.createElement('button');close.className='historyBtn';close.textContent='Close';close.onclick=()=>panel.remove();panel.appendChild(close);
+ document.body.appendChild(panel);
+}
+
+function clearHistory(){
+ if(confirm('Delete all saved Nova AI history?')){
+   history=[];localStorage.removeItem('novaHistory');showHistory();
+ }
+}
+
+function escapeHtml(s){
+ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* Voice recognition */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null;
+if(SR){
+ recognition=new SR(); window.recognition=recognition;
+ recognition.continuous=false;recognition.interimResults=false;recognition.lang=currentLanguage;
+ recognition.onstart=()=>{document.getElementById('mic').classList.add('listening');status.textContent='🎙️ Listening...'};
+ recognition.onresult=e=>{input.value=e.results[0][0].transcript;status.textContent='Voice captured';input.focus()};
+ recognition.onerror=e=>{status.textContent='Voice error: '+e.error;document.getElementById('mic').classList.remove('listening')};
+ recognition.onend=()=>{document.getElementById('mic').classList.remove('listening');if(status.textContent==='🎙️ Listening...')status.textContent=langText[currentLanguage].ready};
+}else{
+ document.getElementById('mic').title='Voice recognition is not supported in this browser';
+}
+
+function startVoice(){
+ if(!recognition){alert('Voice recognition is not supported in this browser. Try Google Chrome.');return}
+ recognition.lang=currentLanguage;
+ try{recognition.start()}catch(e){}
+}
+
+/* Text-to-speech */
+let availableVoices=[];
+function loadVoices(){
+ if(!('speechSynthesis' in window)) return;
+ availableVoices=speechSynthesis.getVoices()||[];
+}
+loadVoices();
+if('speechSynthesis' in window && speechSynthesis.onvoiceschanged!==undefined){
+ speechSynthesis.onvoiceschanged=loadVoices;
+}
+
+let lastAnswerText='';
+function speak(text){
+ lastAnswerText=text||'';
+ if(!('speechSynthesis' in window)){
+   status.textContent='🔊 Speech is not supported by this browser.';
+   return;
+ }
+ loadVoices();
+ speechSynthesis.cancel();
+
+ const utter=new SpeechSynthesisUtterance(lastAnswerText);
+ utter.lang=currentLanguage;
+ utter.rate=.9;
+ utter.pitch=1;
+ utter.volume=1;
+
+ const base=currentLanguage.split('-')[0].toLowerCase();
+ let voice=availableVoices.find(v=>v.lang && v.lang.toLowerCase()===currentLanguage.toLowerCase());
+ if(!voice) voice=availableVoices.find(v=>v.lang && v.lang.toLowerCase().startsWith(base+'-'));
+
+ if(voice) utter.voice=voice;
+
+ utter.onstart=()=>status.textContent='🔊 Speaking...';
+ utter.onend=()=>status.textContent=langText[currentLanguage].ready;
+ utter.onerror=(e)=>{
+   console.error('Speech synthesis error:',e.error);
+   status.textContent='🔊 Voice unavailable for '+currentLanguage+'. Try Speak Last Answer.';
+ };
+
+ speechSynthesis.speak(utter);
+}
+
+function speakLastAnswer(){
+ if(lastAnswerText) speak(lastAnswerText);
+ else status.textContent='Ask Nova AI something first.';
+}
+</script>
+</body>
+</html>
+
